@@ -1,7 +1,7 @@
 
 
 INSERT INTO
-    department (department)
+    department (name)
 VALUES
     ('Human Resources'),
     ('R&D'),
