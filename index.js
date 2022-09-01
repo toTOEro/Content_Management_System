@@ -95,7 +95,7 @@ function init() {
         .then((response) => {
             switch (response.userAction) {
                 case 'View all departments':
-                    
+                    db.query()
                 case 'View all roles':
 
                 case 'View all employees':
@@ -106,7 +106,7 @@ function init() {
 
                 case 'Add an employee':
 
-                case 'Update an employee role','value':
+                case 'Update an employee role':
 
 
                 default:
