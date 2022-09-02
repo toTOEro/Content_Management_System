@@ -20,28 +20,18 @@ const db = new DbPing(mysql.createConnection(
 ))
 
 
-// const db = mysql.createConnection(
-//     {
-//         host: 'localhost',
-//         user: 'root',
-//         password: 'password',
-//         database: 'employee_db'
-//     },
-//     console.log(`Connected to the employee_db database.`)
-// );
-
-// db.getDepartments().then((res) => console.log(res))
-
 // This function initializes the app to begin asking questions.
-function init() {
+async function init() {
     inquirer
         .prompt(userAction)
         .then((response) => {
             switch (response.userAction) {
                 case 'View all departments':
-                    db.viewDepartment()
-                        .then((res) => console.log(res))
-                        .then(() => init());
+                    const viewDepts = async () => {
+                        console.table(`\n\nDepartments`, await db.viewDepartment());
+                        init();
+                    }
+                    viewDepts();
                     return;
 
                 case 'View all roles':
@@ -50,33 +40,40 @@ function init() {
                     return;
 
                 case 'View all employees':
-                    db.viewEmployees()
-                        .then(() => init());
+                    const viewEmployees = async() => {
+                        console.table(`\n\nEmployees`, await db.viewEmployees());
+                        init()
+
+                    }
+                    viewEmployees();
                     return;
 
                 case 'Add a department':
                     inquirer.prompt(addDepartment)
                         .then(({ departmentName }) => {
-                            db.addDepartment(departmentName).then(() => init());
+                            db.addDepartment(departmentName)
+                                .then(init());
                         })
                     return;
 
                 case 'Add a role':
                     let departments = [];
-                    
 
+                    const addRole = async () => {
+                        let deptObj = await db.viewDepartment();
 
-                    
-
-                    inquirer.prompt(newRole)
-                        .then(({ roleName, salary, department }) => {
-
-                        })
-
-
-                // // db.addRole()
-                // //     .then(() => init());
-                // return;
+                        departments = deptObj.map(({ name }) => name);
+                        let roleQuestions = newRoleQs(departments);
+                        let { roleName, roleSalary, roleDepartment } = await inquirer.prompt(roleQuestions);
+                        deptObj.forEach((department) => {
+                            if (roleDepartment === department.name) { deptId = department.id };
+                        });
+                        db.addRole(roleName, roleSalary, deptId);
+                        console.log(`\nA ${roleName} role has been added\n`);
+                        init();
+                    };
+                    addRole();
+                    return;
 
                 case 'Add an employee':
                     db.addEmployee()
@@ -133,53 +130,11 @@ const addDepartment = [
     }
 ];
 
-const newEmployee = [
-    {
-        type: 'input',
-        message: 'What is the first name?',
-        name: 'employeeFirstName',
-    },
-    {
-        type: 'input',
-        message: 'What is the first name?',
-        name: 'employeeLastName',
-    },
-    {
-        type: 'input',
-        message: 'What department?',
-        name: 'employeeDepartment',
-    },
-    {
-        type: 'input',
-        message: 'What is their role?',
-        name: 'employeeRole',
-    },
-    {
-        type: 'input',
-        message: 'Who is their manager?',
-        name: 'employeeManager'
-    }
-];
 
-const newRole = [
-    {
-        type: 'input',
-        message: 'What is the role name?',
-        name: 'roleName',
-    },
-    {
-        type: 'number',
-        message: 'What is the salary?',
-        name: 'roleSalary',
-    },
-    {
-        type: 'list',
-        message: 'What department is this role?',
-        name: 'roleDepartment',
-        choices: deptNames
-    }
 
-]
+
+
+
 
 const updateRole = [
     {
@@ -190,30 +145,65 @@ const updateRole = [
 
 ]
 
-console.log(newRole)
 
-function deptChoices() {
-    db.db.promise().query(`SELECT * FROM department
-    ORDER BY id;`).then(([rows, fields]) => {
-        departments = rows.map(({name}) => name)
-        return departments
-    });
+
+function newRoleQs(departments) {
+
+    const newRoleQs = [
+        {
+            type: 'input',
+            message: 'What is the role name?',
+            name: 'roleName',
+        },
+        {
+            type: 'number',
+            message: 'What is the salary?',
+            name: 'roleSalary',
+        },
+        {
+            type: 'list',
+            message: 'What department is this role?',
+            name: 'roleDepartment',
+            choices: departments
+        }
+    ]
+
+    return newRoleQs;
+};
+
+function newEmployee(department, role, manager) {
+    const newEmployeeQs = [
+        {
+            type: 'input',
+            message: 'What is the first name?',
+            name: 'employeeFirstName',
+        },
+        {
+            type: 'input',
+            message: 'What is the first name?',
+            name: 'employeeLastName',
+        },
+        {
+            type: 'list',
+            message: 'What department?',
+            name: 'employeeDepartment',
+            choices: department
+        },
+        {
+            type: 'input',
+            message: 'What is their role?',
+            name: 'employeeRole',
+            choices: role
+        },
+        {
+            type: 'input',
+            message: 'Who is their manager?',
+            name: 'employeeManager',
+            manager: manager
+        }
+    ];
+    return newEmployeeQs
 }
-
-// async function getD() {
-//     // db.getDepartments();
-//     return ['1', '2']
-// }
-
-// console.log(getD())
-// console.log(db.getDepartments())
-
-// let test = db.getDepartments();
-// console.log(test)
-// test.then((res) => console.log(res))
-
-
-
 
 
 // Function call to initialize app
