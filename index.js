@@ -22,6 +22,10 @@ const db = new DbPing(mysql.createConnection(
 
 // This function initializes the app to begin asking questions.
 async function init() {
+    let departmentsArr = [];
+    let managersArr = [];
+    let rolesArr = [];
+
     inquirer
         .prompt(userAction)
         .then((response) => {
@@ -30,20 +34,22 @@ async function init() {
                     const viewDepts = async () => {
                         console.table(`\n\nDepartments`, await db.viewDepartment());
                         init();
-                    }
+                    };
                     viewDepts();
                     return;
 
                 case 'View all roles':
-                    db.viewRoles()
-                        .then(() => init());
+                    const viewRoles = async () => {
+                        console.table(`\n\nRoles`, await db.viewRoles());
+                        init();
+                    };
+                    viewRoles();
                     return;
 
                 case 'View all employees':
-                    const viewEmployees = async() => {
+                    const viewEmployees = async () => {
                         console.table(`\n\nEmployees`, await db.viewEmployees());
                         init()
-
                     }
                     viewEmployees();
                     return;
@@ -57,13 +63,13 @@ async function init() {
                     return;
 
                 case 'Add a role':
-                    let departments = [];
 
                     const addRole = async () => {
+                        let deptId;
                         let deptObj = await db.viewDepartment();
+                        departmentsArr = deptObj.map(({ name }) => name);
 
-                        departments = deptObj.map(({ name }) => name);
-                        let roleQuestions = newRoleQs(departments);
+                        let roleQuestions = initRoleQs(departmentsArr);
                         let { roleName, roleSalary, roleDepartment } = await inquirer.prompt(roleQuestions);
                         deptObj.forEach((department) => {
                             if (roleDepartment === department.name) { deptId = department.id };
@@ -76,8 +82,41 @@ async function init() {
                     return;
 
                 case 'Add an employee':
-                    db.addEmployee()
-                        .then(() => init());
+                    const newEmployee = async () => {
+                        let managerId
+                        let roleId
+                        let managerObj = await db.viewEmployees('Manager');
+                        let rolesObj = await db.viewRoles();
+
+                        managersArr = managerObj.map(({ first_name, last_name }) => `${first_name} ${last_name}`)
+                        rolesArr = rolesObj.map(({ title }) => title);
+
+                        let newEmpQs = initEmployeeQs(rolesArr, managersArr);
+                        let { employeeFirstName,
+                            employeeLastName,
+                            employeeRole,
+                            employeeManager } = await inquirer.prompt(newEmpQs);
+
+
+                        managerObj.forEach((manager) => {
+                            if (employeeManager == `${manager.first_name} ${manager.last_name}`) {
+                                managerId = manager.id
+                            }
+                        });
+
+                        rolesObj.forEach((role) => {
+                            if (employeeRole == role.title) {
+                                roleId = role.id
+                            }
+                        }
+                        )
+
+                        db.addEmployee(employeeFirstName, employeeLastName, roleId, managerId)
+
+                        init()
+
+                    }
+                    newEmployee();
                     return;
 
                 case 'Update an employee role':
@@ -147,7 +186,7 @@ const updateRole = [
 
 
 
-function newRoleQs(departments) {
+function initRoleQs(departments) {
 
     const newRoleQs = [
         {
@@ -171,7 +210,7 @@ function newRoleQs(departments) {
     return newRoleQs;
 };
 
-function newEmployee(department, role, manager) {
+function initEmployeeQs(role, manager) {
     const newEmployeeQs = [
         {
             type: 'input',
@@ -180,26 +219,20 @@ function newEmployee(department, role, manager) {
         },
         {
             type: 'input',
-            message: 'What is the first name?',
+            message: 'What is the last name?',
             name: 'employeeLastName',
         },
         {
             type: 'list',
-            message: 'What department?',
-            name: 'employeeDepartment',
-            choices: department
-        },
-        {
-            type: 'input',
             message: 'What is their role?',
             name: 'employeeRole',
             choices: role
         },
         {
-            type: 'input',
+            type: 'list',
             message: 'Who is their manager?',
             name: 'employeeManager',
-            manager: manager
+            choices: manager
         }
     ];
     return newEmployeeQs
