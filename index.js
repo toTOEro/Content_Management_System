@@ -118,7 +118,7 @@ async function init() {
                             employeeManager } = await inquirer.prompt(newEmpQs);
 
                         // Pulls manager ID, populates null if employee has no manager
-                        if (employeeManager = 'None') {
+                        if (employeeManager == 'None') {
                             managerId = null;
                         } else {
                             managerObj.forEach((manager) => {
@@ -189,6 +189,49 @@ async function init() {
                     updateEmp();
                     return;
 
+                case 'Update Employee Manager':
+                    const updateEmManager = async () => {
+                        let empId;
+                        let managerId;
+                        let managerObj = await db.viewEmployees('Manager');
+                        let employeeObj = await db.viewEmployees();
+
+                        // Creates a employee and manager array with the concatenated first and last name
+                        employeesArr = employeeObj.map(({ first_name, last_name }) =>
+                            `${first_name} ${last_name}`
+                        );
+
+                        managersArr = managerObj.map(({ first_name, last_name }) =>
+                            `${first_name} ${last_name}`)
+                        managersArr.push('None');
+                        let inquirerQs = initUpdateManagerQs(employeesArr,managersArr)
+
+                        let {updateEmp, updatedManager} = await inquirer.prompt(inquirerQs);
+
+                        // Pulls manager ID, populates null if employee has no manager
+                        if (updatedManager == 'None') {
+                            managerId = null;
+                        } else {
+                            managerObj.forEach((manager) => {
+                                if (updatedManager == `${manager.first_name} ${manager.last_name}`) {
+                                    managerId = manager.id
+                                }
+                            })
+                        };
+
+                        // Pulls employee ID
+                        employeeObj.forEach((employee) => {
+                            if (updateEmp == `${employee.first_name} ${employee.last_name}`) {
+                                empId = employee.id
+                            };
+                        });
+
+                        await db.updateManager(empId,managerId);
+                        init();
+                    }
+                    updateEmManager();
+                    return;
+
                 case 'Quit':
                     db.end();
                     return;
@@ -218,6 +261,7 @@ const userAction = [
             'Add a role',
             'Add an employee',
             'Update an employee role',
+            'Update Employee Manager',
             'Quit'
         ]
     },
@@ -231,6 +275,24 @@ const addDepartment = [
         name: 'departmentName',
     }
 ];
+
+function initUpdateManagerQs (employees,managers) {
+    const updateQs = [
+        {
+            type: 'list',
+            message: 'Who are you updating?',
+            name: 'updateEmp',
+            choices: employees
+        },
+        {
+            type: 'list',
+            message: 'Who is their new manager?',
+            name: 'updatedManager',
+            choices: managers
+        },
+    ];
+    return updateQs;
+};
 
 function initUpdateRoleQs(employees, roles) {
     const updateRole = [
