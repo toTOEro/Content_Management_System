@@ -1,11 +1,28 @@
-// This code requires the inquirer, and mysql2 in order to properly funcion.
+// This code requires the inquirer, and mysql2 in order to properly funcion. This interacts with employee_db to pull company department and staff information, as well as allows
+// for addition and updating of information.
 
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const DbPing = require('./lib/queries')
 const cTable = require('console.table');
-// const { userAction, addDepartment, newEmployee, newRole, updateRole } = require('./lib/questions')
 
+// Jumbotron header font art generated from https://fsymbols.com/text-art/
+console.log(`
+    
+███████╗███╗░░░███╗██████╗░██╗░░░░░░█████╗░██╗░░░██╗███████╗███████╗
+██╔════╝████╗░████║██╔══██╗██║░░░░░██╔══██╗╚██╗░██╔╝██╔════╝██╔════╝
+█████╗░░██╔████╔██║██████╔╝██║░░░░░██║░░██║░╚████╔╝░█████╗░░█████╗░░
+██╔══╝░░██║╚██╔╝██║██╔═══╝░██║░░░░░██║░░██║░░╚██╔╝░░██╔══╝░░██╔══╝░░
+███████╗██║░╚═╝░██║██║░░░░░███████╗╚█████╔╝░░░██║░░░███████╗███████╗
+╚══════╝╚═╝░░░░░╚═╝╚═╝░░░░░╚══════╝░╚════╝░░░░╚═╝░░░╚══════╝╚══════╝
+
+     ████████╗██████╗░░█████╗░░█████╗░██╗░░██╗███████╗██████╗░
+     ╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██║░██╔╝██╔════╝██╔══██╗
+     ░░░██║░░░██████╔╝███████║██║░░╚═╝█████═╝░█████╗░░██████╔╝
+     ░░░██║░░░██╔══██╗██╔══██║██║░░██╗██╔═██╗░██╔══╝░░██╔══██╗
+     ░░░██║░░░██║░░██║██║░░██║╚█████╔╝██║░╚██╗███████╗██║░░██║
+     ░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝░╚════╝░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝
+`);
 
 // DB Initialization
 
@@ -203,9 +220,9 @@ async function init() {
                         managersArr = managerObj.map(({ first_name, last_name }) =>
                             `${first_name} ${last_name}`)
                         managersArr.push('None');
-                        let inquirerQs = initUpdateManagerQs(employeesArr,managersArr)
+                        let inquirerQs = initUpdateManagerQs(employeesArr, managersArr)
 
-                        let {updateEmp, updatedManager} = await inquirer.prompt(inquirerQs);
+                        let { updateEmp, updatedManager } = await inquirer.prompt(inquirerQs);
 
                         // Pulls manager ID, populates null if employee has no manager
                         if (updatedManager == 'None') {
@@ -225,7 +242,7 @@ async function init() {
                             };
                         });
 
-                        await db.updateManager(empId,managerId);
+                        await db.updateManager(empId, managerId);
                         init();
                     }
                     updateEmManager();
@@ -275,7 +292,7 @@ const addDepartment = [
     }
 ];
 
-function initUpdateManagerQs (employees,managers) {
+function initUpdateManagerQs(employees, managers) {
     const updateQs = [
         {
             type: 'list',
