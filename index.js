@@ -139,23 +139,25 @@ async function init() {
                     return;
 
                 case 'Update an employee role':
-
                     const updateEmp = async () => {
                         let roleId
                         let empId
+
+                        // Pulling current employees/roles
                         let rolesObj = await db.viewRoles();
                         let employeeObj = await db.viewEmployees();
 
-
-                        // Creates a roles array by mapping role titles
+                        // Creates a roles and manager arrays for inquirer
                         employeesArr = employeeObj.map(({ first_name, last_name }) =>
                             `${first_name} ${last_name}`
                         );
 
                         rolesArr = rolesObj.map(({ title }) => title);
 
+                        // Initialize inquirer quetsions
                         const inqQuestions = initUpdateRoleQs(employeesArr, rolesArr);
 
+                        // Asks quetions
                         let { updateEmp, updatedRole } = await inquirer.prompt(inqQuestions);
 
                         // Pulls role ID
@@ -172,11 +174,13 @@ async function init() {
                             };
                         });
 
+                        // Pushes new employee role to DB
                         await db.updateEmployee(roleId, empId);
+
                         init();
                     };
-                    updateEmp();
 
+                    updateEmp();
                     return;
 
                 case 'Quit':
