@@ -182,10 +182,9 @@ async function init() {
 
                         // Pushes new employee role to DB
                         await db.updateEmployee(roleId, empId);
-
+                        console.log(`\nUpdated role to ${updatedRole}!`)
                         init();
                     };
-
                     updateEmp();
                     return;
 
