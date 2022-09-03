@@ -83,7 +83,7 @@ async function init() {
                         });
 
                         // DB query to add role
-                        db.addRole(roleName, roleSalary, deptId);
+                        await db.addRole(roleName, roleSalary, deptId);
 
                         // re-init
                         init();
@@ -103,6 +103,7 @@ async function init() {
                         // Creates a manager array with the concatenated first and last name
                         managersArr = managerObj.map(({ first_name, last_name }) =>
                             `${first_name} ${last_name}`)
+                        managersArr.push('None')
 
                         // Creates a roles array by mapping role titles
                         rolesArr = rolesObj.map(({ title }) => title);
@@ -116,12 +117,17 @@ async function init() {
                             employeeRole,
                             employeeManager } = await inquirer.prompt(newEmpQs);
 
-                        // Pulls manager ID
-                        managerObj.forEach((manager) => {
-                            if (employeeManager == `${manager.first_name} ${manager.last_name}`) {
-                                managerId = manager.id
-                            }
-                        });
+                        // Pulls manager ID, populates null if employee has no manager
+                        if (employeeManager = 'None') {
+                            managerId = null;
+                        } else {
+                            managerObj.forEach((manager) => {
+                                if (employeeManager == `${manager.first_name} ${manager.last_name}`) {
+                                    managerId = manager.id
+                                }
+                            })
+                        }
+                        ;
 
                         // Pulls role ID
                         rolesObj.forEach((role) => {
@@ -131,7 +137,7 @@ async function init() {
                         });
 
                         // Adds new employee to DB
-                        db.addEmployee(employeeFirstName, employeeLastName, roleId, managerId)
+                        await db.addEmployee(employeeFirstName, employeeLastName, roleId, managerId)
                         init()
 
                     }
