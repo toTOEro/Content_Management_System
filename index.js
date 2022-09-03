@@ -29,7 +29,10 @@ async function init() {
     inquirer
         .prompt(userAction)
         .then((response) => {
+            // Switch statement to handle what the user wants to do, each case describes what 
+            // each case does
             switch (response.userAction) {
+
                 case 'View all departments':
                     const viewDepts = async () => {
                         console.table(`\n\nDepartments`, await db.viewDepartment());
@@ -66,16 +69,23 @@ async function init() {
 
                     const addRole = async () => {
                         let deptId;
+                        // Pulls all current departments from the DB and maps them to an array
                         let deptObj = await db.viewDepartment();
                         departmentsArr = deptObj.map(({ name }) => name);
 
+                        // Generates the question object array for inquirer
                         let roleQuestions = initRoleQs(departmentsArr);
                         let { roleName, roleSalary, roleDepartment } = await inquirer.prompt(roleQuestions);
+
+                        // Confirms the department ID
                         deptObj.forEach((department) => {
                             if (roleDepartment === department.name) { deptId = department.id };
                         });
+
+                        // DB query to add role
                         db.addRole(roleName, roleSalary, deptId);
-                        console.log(`\nA ${roleName} role has been added\n`);
+
+                        // re-init
                         init();
                     };
                     addRole();
@@ -85,34 +95,43 @@ async function init() {
                     const newEmployee = async () => {
                         let managerId
                         let roleId
+
+                        // DB queries to pull current managers and roles
                         let managerObj = await db.viewEmployees('Manager');
                         let rolesObj = await db.viewRoles();
 
-                        managersArr = managerObj.map(({ first_name, last_name }) => `${first_name} ${last_name}`)
+                        // Creates a manager array with the concatenated first and last name
+                        managersArr = managerObj.map(({ first_name, last_name }) =>
+                            `${first_name} ${last_name}`)
+
+                        // Creates a roles array by mapping role titles
                         rolesArr = rolesObj.map(({ title }) => title);
 
+                        // Initializes questions for inquirer
                         let newEmpQs = initEmployeeQs(rolesArr, managersArr);
+
+
                         let { employeeFirstName,
                             employeeLastName,
                             employeeRole,
                             employeeManager } = await inquirer.prompt(newEmpQs);
 
-
+                        // Pulls manager ID
                         managerObj.forEach((manager) => {
                             if (employeeManager == `${manager.first_name} ${manager.last_name}`) {
                                 managerId = manager.id
                             }
                         });
 
+                        // Pulls role ID
                         rolesObj.forEach((role) => {
                             if (employeeRole == role.title) {
                                 roleId = role.id
                             }
-                        }
-                        )
+                        });
 
+                        // Adds new employee to DB
                         db.addEmployee(employeeFirstName, employeeLastName, roleId, managerId)
-
                         init()
 
                     }
@@ -120,8 +139,44 @@ async function init() {
                     return;
 
                 case 'Update an employee role':
-                    db.updateEmployee()
-                        .then(() => init());
+
+                    const updateEmp = async () => {
+                        let roleId
+                        let empId
+                        let rolesObj = await db.viewRoles();
+                        let employeeObj = await db.viewEmployees();
+
+
+                        // Creates a roles array by mapping role titles
+                        employeesArr = employeeObj.map(({ first_name, last_name }) =>
+                            `${first_name} ${last_name}`
+                        );
+
+                        rolesArr = rolesObj.map(({ title }) => title);
+
+                        const inqQuestions = initUpdateRoleQs(employeesArr, rolesArr);
+
+                        let { updateEmp, updatedRole } = await inquirer.prompt(inqQuestions);
+
+                        // Pulls role ID
+                        rolesObj.forEach((role) => {
+                            if (updatedRole == role.title) {
+                                roleId = role.id
+                            }
+                        });
+
+                        // Pulls employee ID
+                        employeeObj.forEach((employee) => {
+                            if (updateEmp == `${employee.first_name} ${employee.last_name}`) {
+                                empId = employee.id
+                            };
+                        });
+
+                        await db.updateEmployee(roleId, empId);
+                        init();
+                    };
+                    updateEmp();
+
                     return;
 
                 case 'Quit':
@@ -130,11 +185,9 @@ async function init() {
 
                 default:
                     return;
-            }
-
-        })
-
-}
+            };
+        });
+};
 
 
 
@@ -169,21 +222,24 @@ const addDepartment = [
     }
 ];
 
+function initUpdateRoleQs(employees, roles) {
+    const updateRole = [
+        {
+            type: 'list',
+            message: 'Who are you updating?',
+            name: 'updateEmp',
+            choices: employees
+        },
+        {
+            type: 'list',
+            message: 'What is their new role?',
+            name: 'updatedRole',
+            choices: roles
+        },
+    ]
 
-
-
-
-
-
-const updateRole = [
-    {
-        type: 'input',
-        message: 'What is their new role?',
-        name: 'newRole',
-    },
-
-]
-
+    return updateRole
+};
 
 
 function initRoleQs(departments) {

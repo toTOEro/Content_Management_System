@@ -17,11 +17,11 @@ VALUES
     ('IT Specialist', 65000, 4),
     ('Systems Engineer', 110000, 3),
     ('R&D Engineer', 120000, 2),
-    ('Manager', 150000, 1),
-    ('Manager', 150000, 2), 
-    ('Manager', 150000, 3),
-    ('Manager', 150000, 4),
-    ('Manager', 150000, 5);
+    ('HR Manager', 150000, 1),
+    ('R&D Manager', 150000, 2), 
+    ('DevOps Manager', 150000, 3),
+    ('IT Manager', 150000, 4),
+    ('Engineering Manager', 150000, 5);
 
 
 INSERT INTO
